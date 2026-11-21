@@ -1,0 +1,75 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'java-test-fixtures'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.16'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.dev.infra'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+    enabled = true
+    archiveClassifier = '' //use empty string
+}
+
+bootJar {
+    enabled = false
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    if (System.env.NEXUS_URL) {
+        maven {
+            url = System.env.NEXUS_URL
+            credentials {
+                username System.env.NEXUS_USER
+                password System.env.NEXUS_PASSWORD
+            }
+        }
+    }
+}
+
+dependencies {
+    testFixturesApi 'com.tngtech.archunit:archunit-junit5:1.5.1'
+    testFixturesApi 'com.tngtech.archunit:archunit:1.5.1'
+    testFixturesImplementation 'org.junit.jupiter:junit-jupiter'
+    testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testFixturesImplementation 'org.springframework.boot:spring-boot-starter-web'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+clean.doFirst {
+    delete "${projectDir}/build"
+    delete "${projectDir}/out"
+}
+
+publishing {
+    publications {
+        mavenRep(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        if (System.env.NEXUS_URL) {
+            maven {
+                name = 'nexus'
+                url = System.env.NEXUS_URL
+                credentials {
+                    username System.env.NEXUS_USER
+                    password System.env.NEXUS_PASSWORD
+                }
+            }
+        }
+    }
+}
